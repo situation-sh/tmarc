@@ -16,10 +16,7 @@ func search(dir string) FeedbackResults {
 			}
 			content, err := checkFile(path)
 			if err != nil {
-				// fmt.Println(path, err)
 				return nil
-			} else {
-				// fmt.Println(path, "\n", string(content))
 			}
 			feedback := Feedback{}
 

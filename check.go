@@ -7,7 +7,6 @@ import (
 	"compress/gzip"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"strings"
 
@@ -22,7 +21,10 @@ func dmarcMatcher(data []byte) bool {
 	buffer := bytes.NewBuffer(data)
 	scanner := bufio.NewScanner(buffer)
 	// skip first line (xml type)
-	if scanner.Scan() && scanner.Scan() {
+	if !scanner.Scan() {
+		return false
+	}
+	if scanner.Scan() {
 		line := scanner.Text()
 		if strings.HasPrefix(line, "<feedback>") {
 			return true
@@ -100,11 +102,17 @@ func checkFile(path string) ([]byte, error) {
 	}
 
 	if filetype.IsType(header, dmarcType) {
-		if bytes, err := ioutil.ReadAll(reader); err != nil {
+		var buffer bytes.Buffer
+		if _, err := io.Copy(&buffer, reader); err != nil {
 			return nil, err
 		} else {
-			return bytes, nil
+			return buffer.Bytes(), nil
 		}
+		// if bytes, err := ioutil.ReadAll(reader); err != nil {
+		// 	return nil, err
+		// } else {
+		// 	return bytes, nil
+		// }
 	}
 	return nil, fmt.Errorf("the file is not a DMARC report")
 }

@@ -32,7 +32,7 @@ func (d *Date) UnmarshalJSON(b []byte) error {
 type FeedbackResult struct {
 	SourceFile string `json:"source_file"`
 	OrgName    string `json:"org_name"`
-	ReportID   string `json:"report_id`
+	ReportID   string `json:"report_id"`
 	Begin      Date   `json:"begin"`
 	End        Date   `json:"end"`
 	SourceIP   net.IP `json:"source_ip"`

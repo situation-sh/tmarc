@@ -9,11 +9,6 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
-var headerBaseStyle = lipgloss.NewStyle().
-	Foreground(lipgloss.Color("255")).
-	Bold(true).
-	MarginLeft(1)
-
 var active = spinner.Spinner{
 	Frames: []string{"∙", "●"},
 	FPS:    time.Second / 2,

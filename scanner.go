@@ -7,14 +7,13 @@ import (
 // dummy component to fetch data
 type scanner struct {
 	directory string
-	busy      bool
 }
 
 type ScanResultsMsg FeedbackResults
 type ScanTriggerMsg string
 
 func NewScanner(directory string) scanner {
-	return scanner{directory: directory, busy: false}
+	return scanner{directory: directory}
 }
 
 func (s scanner) Init() tea.Cmd {
@@ -34,9 +33,7 @@ func (s scanner) View() string {
 }
 
 func (s scanner) rawScan() FeedbackResults {
-	s.busy = true
 	fr := search(s.directory)
-	s.busy = false
 	return fr
 }
 
