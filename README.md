@@ -11,7 +11,7 @@ TUI for DMARC reports
 You can directly download and build with `go`.
 
 ```shell
-go install github.com/situation-sh/tmarc
+go install github.com/situation-sh/tmarc@latest
 ```
 
 Otherwise you can clone/make (you may need to install [xgen](https://github.com/xuri/xgen)).
