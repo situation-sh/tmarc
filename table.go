@@ -18,6 +18,9 @@ func tableStyle() table.Styles {
 }
 
 func toTable(results FeedbackResults) ([]table.Column, []table.Row) {
+	if len(results) == 0 {
+		return []table.Column{}, []table.Row{}
+	}
 	r := results[0]
 	cols := r.Columns(0)
 
