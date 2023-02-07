@@ -9,6 +9,16 @@ import (
 
 const maxColWidth = 22
 
+func RenderTable(t *table.Model) string {
+	style := lipgloss.NewStyle().BorderStyle(lipgloss.RoundedBorder())
+	if t.Focused() {
+		style = style.BorderForeground(lipgloss.Color(Theme().primary))
+	} else {
+		style = style.BorderForeground(lipgloss.Color("240"))
+	}
+	return style.Render(t.View())
+}
+
 func tableStyle() table.Styles {
 	return table.Styles{
 		Selected: lipgloss.NewStyle().Bold(true).Background(Theme().primary).Foreground(lipgloss.Color("#FFFFFF")),
@@ -22,14 +32,14 @@ func toTable(results FeedbackResults) ([]table.Column, []table.Row) {
 		return []table.Column{}, []table.Row{}
 	}
 	r := results[0]
-	cols := r.Columns(0)
+	cols := r.Columns()
 
 	rows := make([]table.Row, 0)
 	columns := make([]table.Column, len(cols))
 
 	widths := make([]int, len(cols))
 	for _, r := range results {
-		r := r.ToRow(0)
+		r := r.ToRow()
 		for k, s := range r {
 			ls := len(s)
 			if ls > maxColWidth {

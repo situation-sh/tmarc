@@ -12,6 +12,7 @@ import (
 func main() {
 	flag.StringVar(&directory, "d", ".", "directory to scan")
 	flag.StringVar(&selectedTheme, "t", "default", fmt.Sprintf("color theme (%s)", strings.Join(ListThemes(), ", ")))
+	flag.BoolVar(&highlightXML, "p", false, "enable xml syntax highlighting (experimental)")
 	flag.Parse()
 
 	m := NewModel(directory)

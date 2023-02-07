@@ -62,8 +62,10 @@ func (k keyMap) FullHelp() [][]key.Binding {
 type model struct {
 	scanner  scanner
 	header   header
-	table    table.Model
+	table    *table.Model
+	viewer   xmlViewer
 	help     help.Model
+	results  FeedbackResults
 	updating bool
 }
 
@@ -77,11 +79,15 @@ func NewModel(directory string) model {
 
 	h := help.New()
 	// h.ShowAll = false
+	table := NewTable(results)
+	table.Focus()
 	return model{
 		scanner:  scanner,
 		header:   NewHeader(dir, results.Files(), results.Len()),
-		table:    NewTable(results),
+		table:    &table,
+		viewer:   NewXMLViewer(),
 		help:     h,
+		results:  results,
 		updating: false,
 	}
 }
@@ -99,24 +105,59 @@ func (m model) keys() keyMap {
 		)}
 }
 
+func (m model) selected() *FeedbackResult {
+	selected := m.table.Cursor()
+	return m.results[selected]
+}
+
+func (m model) nextFocus() {
+	if m.table.Focused() {
+		m.table.Blur()
+		m.viewer.Focus()
+	} else {
+		m.table.Focus()
+		m.viewer.Blur()
+	}
+	// fmt.Println("table:", m.table.Focused())
+	// fmt.Println("viewer:", m.viewer.Focused())
+}
+
+func (m model) resize(width, height int) {
+	m.table.SetHeight(height - 8)
+	m.header.width = width
+	m.viewer.SetHeight(height - 7)
+	m.viewer.SetWidth(width - m.table.Width())
+}
+
+func (m model) Show() tea.Msg {
+	selected := m.selected()
+	xmlMsg := ShowXMLRecordMsg(string(selected.XML))
+	return tea.Msg(xmlMsg)
+}
+
 func (m model) Init() tea.Cmd {
 	m.table.Focus()
-	return nil
+	m.viewer.Blur()
+	// display the xml of the selected line
+	return m.Show
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
+	var tbl table.Model
 	cmds := make([]tea.Cmd, 0)
 
 	switch msg := msg.(type) {
 	case spinner.TickMsg:
-		// fmt.Println(m.scanner.busy)
 		if m.updating {
 			// pass the tick to the header
 			// it returns a new tick
 			m.header, cmd = m.header.Update(msg)
 			cmds = append(cmds, cmd)
 		}
+	case ShowXMLRecordMsg:
+		m.viewer, cmd = m.viewer.Update(msg)
+		cmds = append(cmds, cmd)
 	case ScanResultsMsg:
 		// receive results from scanner
 		_, rows := toTable(FeedbackResults(msg))
@@ -133,33 +174,33 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.scanner, cmd = m.scanner.Update(msg)
 		cmds = append(cmds, cmd)
 	case tea.WindowSizeMsg:
-		m.table.SetWidth(msg.Width - 2)
+		// m.table.SetWidth(msg.Width - 2)
 		m.table.SetHeight(msg.Height - 8)
 		m.header.width = msg.Width
+		m.viewer.SetHeight(msg.Height - 7)
+		m.viewer.SetWidth(msg.Width - m.table.Width())
 		return m, tea.ClearScreen
 	case tea.KeyMsg:
 		switch msg.String() {
-		case "up", "k":
-			m.table.MoveUp(1)
-		case "down", "j":
-			m.table.MoveDown(1)
-		case "shift+up":
-			m.table.MoveUp(3)
-		case "shift+down":
-			m.table.MoveDown(3)
-		case "f", "pgdown":
-			m.table.GotoBottom()
-		case "b", "pgup":
-			m.table.GotoTop()
 		case "q", "esc", "ctrl+c":
 			return m, tea.Quit
+		case "tab":
+			m.nextFocus()
 		case "s":
 			var msg ScanTriggerMsg
 			return m, func() tea.Msg { return tea.Msg(msg) }
-		case "enter":
-			return m, tea.Batch(
-				tea.Printf("Let's go to %s!", m.table.SelectedRow()[1]),
-			)
+		default:
+			if m.table.Focused() {
+				tbl, cmd = m.table.Update(msg)
+				m.table = &tbl
+				selected := m.selected()
+				xmlMsg := ShowXMLRecordMsg(string(selected.XML))
+				cmd2 := func() tea.Msg { return tea.Msg(xmlMsg) }
+				cmds = append(cmds, cmd, cmd2)
+			} else {
+				m.viewer, cmd = m.viewer.Update(msg)
+				cmds = append(cmds, cmd)
+			}
 
 		}
 	case tea.MouseEvent:
@@ -177,7 +218,11 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 func (m model) View() string {
 	v := m.header.View()
-	v += baseStyle.Render(m.table.View()) + "\n"
+	if m.viewer.Width() < 25 {
+		v += RenderTable(m.table) + "\n"
+	} else {
+		v += lipgloss.JoinHorizontal(lipgloss.Top, RenderTable(m.table), m.viewer.View()) + "\n"
+	}
 	v += " " + m.help.View(m.keys()) + "\n"
 	return v
 }

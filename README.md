@@ -4,6 +4,8 @@ TUI for DMARC reports
 
 ![tmarc](assets/demo.png)
 
+![tmarc](assets/demo2.png)
+
 :arrow_right: If you are drowning in DMARC reports and don't know how to summarize it all.
 
 ## Installation

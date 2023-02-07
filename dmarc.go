@@ -102,6 +102,7 @@ type AuthResultType struct {
 
 // RecordType ...
 type RecordType struct {
+	XMLName     xml.Name        `xml:"record"` // manually added
 	Row         *RowType        `xml:"row"`
 	Identifiers *IdentifierType `xml:"identifiers"`
 	Authresults *AuthResultType `xml:"auth_results"`
